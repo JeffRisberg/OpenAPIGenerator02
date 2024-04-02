@@ -2,7 +2,7 @@
 /.idea/workspace.xml
 
 
-/target
+/build
 
 # Project exclude paths
 /.gradle/
