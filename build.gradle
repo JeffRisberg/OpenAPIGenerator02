@@ -12,26 +12,35 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+        classpath "io.freefair.gradle:lombok-plugin:6.5.0-rc1"
         classpath "org.openapitools:openapi-generator-gradle-plugin:7.2.0"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
     }
 }
 
-apply plugin: 'org.openapi.generator'
 apply plugin: 'java'
+apply plugin: 'org.openapi.generator'
+apply plugin: 'io.freefair.lombok'
 apply plugin: 'com.github.johnrengelman.shadow'
 
+compileJava {
+    sourceCompatibility = 17
+    targetCompatibility = 17
+}
+
+compileJava.dependsOn tasks.named("openApiGenerate")
 
 version = '0.1.0'
 
 ext {
     slf4jVersion = '1.7.26'
-    projectLombokVersion = '1.16.20'
     jodaTimeVersion = '2.10'
     jettyVersion = '9.4.51.v20230217'
     jerseyVersion = '2.39'
-    jacksonVersion = '2.13.5'
+    jacksonVersion = '2.17.0'
     junitVersion = '4.12'
+    swaggerJersey2Version = '1.6.14'
+    swaggerAnnotationsVersion = "2.2.21"
 }
 
 test {
@@ -41,30 +50,39 @@ test {
 }
 
 dependencies {
-    compile "org.slf4j:slf4j-api:$slf4jVersion"
-    runtime "org.slf4j:slf4j-simple:$slf4jVersion"
+    implementation "org.slf4j:slf4j-api:$slf4jVersion"
+    runtimeOnly "org.slf4j:slf4j-simple:$slf4jVersion"
 
-    compile "org.projectlombok:lombok:$projectLombokVersion"
-    compile "joda-time:joda-time:$jodaTimeVersion"
-    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$jacksonVersion"
+    implementation "joda-time:joda-time:$jodaTimeVersion"
+    implementation "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:$jacksonVersion"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
 
-    compile "org.eclipse.jetty:jetty-server:$jettyVersion"
-    compile "org.eclipse.jetty:jetty-servlet:$jettyVersion"
+    implementation "io.swagger:swagger-jersey2-jaxrs:$swaggerJersey2Version"
+    implementation "io.swagger.core.v3:swagger-annotations:$swaggerAnnotationsVersion"
 
-    compile "org.glassfish.jersey.core:jersey-common:$jerseyVersion"
-    compile "org.glassfish.jersey.core:jersey-server:$jerseyVersion"
-    compile "org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion"
-    compile "org.glassfish.jersey.inject:jersey-hk2:$jerseyVersion"
-    compile "org.glassfish.jersey.media:jersey-media-json-jackson:$jerseyVersion"
+    implementation "org.eclipse.jetty:jetty-server:$jettyVersion"
+    implementation "org.eclipse.jetty:jetty-servlet:$jettyVersion"
 
-    compile 'org.glassfish:javax.el:3.0.1-b09'
+    implementation "org.glassfish.jersey.core:jersey-common:$jerseyVersion"
+    implementation "org.glassfish.jersey.core:jersey-server:$jerseyVersion"
+    implementation "org.glassfish.jersey.containers:jersey-container-servlet:$jerseyVersion"
+    implementation "org.glassfish.jersey.inject:jersey-hk2:$jerseyVersion"
+    implementation "org.glassfish.jersey.media:jersey-media-json-jackson:$jerseyVersion"
 
-    testCompile "junit:junit:$junitVersion"
+    implementation 'org.glassfish:javax.el:3.0.1-b09'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', "${buildDir}/generated/src/gen/java", "${buildDir}/generated/src/main/java"]
+        }
+    }
 }
 
 openApiGenerate {
-    generatorName.set("jersey")
-    inputSpec.set("$rootDir/resources/petstore.yml")
+    generatorName.set("jaxrs-jersey")
+    inputSpec.set("$rootDir/src/main/resources/petstore.yml")
     outputDir.set("$buildDir/generated")
     apiPackage.set("com.company.api")
     modelPackage.set("com.company.model")
